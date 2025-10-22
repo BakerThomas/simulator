@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Flood Simulator</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="images/WI Icon.ico">
+  <!-- Bootstrap 5 -->
+  <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>-->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Read Excel Library -->
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  <!-- Plotly -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <!-- Font Awesome --> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+  <style>
+    .bg-tomtheme1 {
+      background-color: rgb(0, 128, 128);
+    }
+    .bg-tomtheme2 {
+      background-color: rgb(0, 170, 136);
+    }
+    .bg-tomtheme3 {
+      background-color: rgb(0, 212, 170);
+    }
+	.bg-fworange{
+	    background-color: rgb(255, 140, 0);
+	}
+  </style>
+</head>
+<body>
+
+
+
+<!-- ================================================================================================================ -->
+<!-- #HEADER -->
+<!-- ================================================================================================================ -->
+
+
+   <!--IMPORT SUMMARY DATA ROW-->	
+  <div class="row bg-warning p-3" id="banner">
+	<div class="col-md-1">
+	</div>
+	<div class="col-md-2">
+		<button id="btnModalLoad" type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#myLoadingModal" style="width:100%">Import Data</button>
+	</div>
+	<div class="col-md-6">
+	</div>
+    <!--<div class="col-md-6" id="statusBadge">
+	</div>-->
+	<div class="col-md-1">
+	</div>
+	<div class="col-md-1">
+		<button id="btnOptions" type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#myOptionsModal" style="width:100%"><i class="fas fa-cog"></i></button>
+	</div>
+  </div>
+
+
+
+
+<!--HEADER CONTAINER-->  
+<div class="container-fluid p-5 m-1 bg-white text-white text-center">
+  <div class="row">
+    <div class="col-md-1"></div>
+    <div class="col-md-3 text-start">
+      <img src='images/Simulator.png' alt='WI Logo' class="img-fluid" style="max-width: 100%;">
+    </div>
+    <div class="col-md-4"></div>
+    <!--<div class="col-md-3"><img src='#' alt='Logo' width="80%"></div>-->
+  </div>
+</div>
+
+<!-- ================================================================================================================ -->
+<!-- #BODY -->
+<!-- ================================================================================================================ -->
+
+<!--BODY CONTAINER-->  
+<div class=".container-fluid">
+
+
+	 <!--ROW 1 Summary Banner-->	
+	  <div class="row bg-secondary bg-opacity-10 p-1 pt-2" id="summaryDiv" style="visibility: hidden;">
+		<div class="col-md-1"></div>
+		<div class="col-md-10" id="statusBadge"></div>
+	  </div>
+
+
+  <!--ROW 2 Event Controls-->	
+	  <div class="row bg-secondary bg-opacity-10 p-1 pb-2" id="eventDiv" style="visibility: hidden;">
+		<div class="col-md-1"></div>
+		<div class="col-md-3 p-1">
+			<div class="btn-group" style="width:100%">
+				<button type="button" class="btn btn-outline-secondary" id="btnSkipBack" style="width:100%"><i class="fas fa-step-backward"></i></button>
+				<button type="button" class="btn btn-outline-secondary" id="btnPlay" style="width:100%"><i class="fas fa-play"></i></button>
+				<button type="button" class="btn btn-outline-secondary" id="btnSkipNext" style="width:100%"><i class="fas fa-step-forward"></i></button>
+			</div>
+		</div>
+		<div class="col-md-4"></div>
+		<div class="col-md-1 p-1" id="statusFAL"><h4><span class='badge bg-secondary' style='width:100%' data-bs-toggle="modal" data-bs-target="#myIssueFALModal"><i class='fas fa-exclamation-triangle'></i> FAL</h4></div>
+		<div class="col-md-1 p-1" id="statusFW"><h4><span class='badge bg-secondary' style='width:100%' data-bs-toggle="modal" data-bs-target="#myIssueFWModal"><i class='fas fa-exclamation-triangle'></i> FW</h4></div>
+		<div class="col-md-1 p-1" id="statusSFW"><h4><span class='badge bg-secondary' style='width:100%' data-bs-toggle="modal" data-bs-target="#myIssueSFWModal"><i class='fas fa-exclamation-triangle'></i> SFW</h4></div>
+	  </div>
+	  
+
+
+  
+  <!--ROW 3 Plot-->
+		<div class="row">
+		  <div class="col-md-1"></div>
+		  <div class="col-md-10 shadow border p-4 mt-5 mb-3 bg-body rounded">
+				<div id="plot"></div>
+		  </div>
+		</div>	
+  
+
+  <!--ROW 4 Inject Toast-->
+		<div class="row">
+				<div class="col-md-1"></div>
+				<div class="col-md-10 p-2">
+					<div class="toast" id="injectToast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false" style="width: 100%;"> 							<!--TO AUTO HIDE OR DELAY:Toast hides by deafult add this to "<div class="toast" bit"  stop or pause: data-bs-autohide="false" data-bs-delay="5000"  Miliseconds-->						<!--TO MAKE TOAST POP UP: <div class="toast-container top-50 start-50 translate-middle">--> 
+					  <div class="toast-header bg-danger">
+					  	<img src="images/WI Icon.ico"  class="rounded me-2" width="20px" alt="WI Logo">
+						<strong class="me-auto">Inject</strong>
+						<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+					  </div>
+					  <div class="toast-body">
+					  </div>
+					</div>
+				</div>
+		</div>
+ 
+  <!--ROW 5 Forecast Toast-->
+		<div class="row">
+				<div class="col-md-1"></div>
+				<div class="col-md-10 p-2">
+					<div class="toast" id="forecastToast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false" style="width: 100%;"> 							<!--TO AUTO HIDE OR DELAY:Toast hides by deafult add this to "<div class="toast" bit"  stop or pause: data-bs-autohide="false" data-bs-delay="5000"  Miliseconds-->						<!--TO MAKE TOAST POP UP: <div class="toast-container top-50 start-50 translate-middle">--> 
+					  <div class="toast-header bg-info">    
+						<img src="images/WI Icon.ico"  class="rounded me-2" width="20px" alt="WI Logo">
+						<strong class="me-auto">Forecast</strong>
+						<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+					  </div>
+					  <div class="toast-body">
+					  </div>
+					</div>
+				</div>
+		</div>
+
+		
+	  <!--ROW 6 Summary Banner-->	
+	  <div class="row p-1 pt-2">
+		<div class="col-md-1"></div>
+		<div class="col-md-6" id="nodeBadge"></div>
+		<div class="col-md-4" id="thresholdBadge"></div>
+	  </div>	
+		
+    <!--ROW 7 Table-->
+    <div class="row">
+      <div class="col-md-1"></div>
+      <div class="col-md-10 pt-5">
+        <div class="table-responsive">
+          <!--<table class='table table-hover' id='csvTable'></table>-->
+          <table class="table table-hover">
+              <thead class="table-secondary">
+                  <tr>
+                    <th></th>
+                    <th>Time</th>
+                    <th>Level </th>
+                    <th>Average Rain</th>
+                  </tr>
+              </thead>
+              <tbody id="phrasesTableBody">
+              </tbody>
+          </table>
+        </div>  
+      </div>
+    </div>		
+</div>
+
+<!-- ================================================================================================================ -->
+<!-- #FOOTER -->
+<!-- ================================================================================================================ -->
+
+  <!--FOOTER CONTAINER-->  
+<div class="container-fluid p-3 bg-light text-white text-center">
+    <div class="row">
+		  <div class="col-md-7"></div>
+		  <div class="col-md-2">
+			<button type="button" class="btn btn-outline-secondary mb-2" onclick="downloadSummaryJSON()" style="width:100%">Export Summary JSON</button>
+		  </div>
+		  <div class="col-md-2">
+			<button type="button" class="btn btn-outline-secondary mb-2" onclick="downloadEventJSON()" style="width:100%">Export Event JSON</button>
+		  </div>
+	</div>
+</div>
+
+
+<!-- ================================================================================================================ -->
+<!-- #MODALS -->
+<!-- ================================================================================================================ -->
+
+<!-- IMPORT MODAL -->
+<div class="modal fade xl" id="myLoadingModal">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header p-5">
+	    <img src='images/Simulator.png' alt='WI Logo' class="img-fluid" style="max-width: 33%;">
+		</br>
+        <!--<h4 class="modal-title">Final Text</h4>-->
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <!-- Modal body -->
+      <div class="modal-body" id="finalText">
+		<!--Row-->
+		<div class="row bg-warning p-3 m-3" id="importEventData">
+			  <div class="col-md-4">Load event data</div>
+			  <div class="col-md-8">
+					<input type="file" id="excelEventDataInput" accept=".csv, .xlsx" class="form-control" />
+			  </div>
+		</div>
+		<!--Row-->
+		<div class="row bg-warning p-3 m-3" id="importSummaryData">
+				<div class="col-md-4">Load summary data</div>
+				<div class="col-md-8">
+					<input type="file" id="excelSummaryDataInput" accept=".csv, .xlsx" class="form-control" />
+				</div>
+			</div>
+      <!--Row-->
+		  <div class="row bg-light p-3 m-3" id="importForecastData">
+		  	<div class="col-md-4">Load forecast data</div>
+			<div class="col-md-8">
+				<input type="file" id="excelForecastDataInput" accept=".csv, .xlsx" class="form-control" />
+			</div>
+		  </div>
+      <!--Row-->
+		  <div class="row bg-light p-3 m-3" id="importInjectData">
+		  	<div class="col-md-4">Load inject data</div>
+			<div class="col-md-8">
+				<input type="file" id="excelInjectDataInput" accept=".csv, .xlsx" class="form-control" />
+			</div>
+		  </div>
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+
+
+<!-- OPTIONS MODAL -->
+<div class="modal fade xl" id="myOptionsModal">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header p-5">
+	    <img src='images/Simulator.png' alt='WI Logo' class="img-fluid" style="max-width: 33%;">
+		</br>
+        <!--<h4 class="modal-title">Final Text</h4>-->
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <!-- Modal body -->
+	   <!--Row-->
+		  <div class="row bg-light p-1 m-1 pt-5">
+		  	<div class="col-md-1 p-1"></div>
+			<div class="col-md-2 p-1">FAL Trigger</div>
+			<div class="col-md-2 p-1">
+				<input class="form-control" id="thresholdFAL" type="text" placeholder="0" aria-label="default input example">
+			</div>
+			<div class="col-md-5 p-1">
+				<input class="form-control" id="txtThldNameFAL" type="text" placeholder="FAL Threshold Name" aria-label="default input example">
+			</div>
+			<div class="col-md-1 p-1">
+				<input type="color" class="form-control form-control-color" id="colorThldFAl" value="#FFD700" title="Choose your color">
+			</div>
+		  </div>
+		<!--Row-->
+		  <div class="row bg-light p-1 m-1">
+		  	<div class="col-md-1 p-1"></div>
+			<div class="col-md-2 p-1">FW Trigger</div>
+			<div class="col-md-2 p-1">
+				<input class="form-control" id="thresholdFW" type="text" placeholder="0" aria-label="default input example"> <!-- disabled -->
+			</div>
+			<div class="col-md-5 p-1">
+				<input class="form-control" id="txtThldNameFW" type="text" placeholder="FW Threshold Name" aria-label="default input example"> <!-- disabled -->
+			</div>
+			<div class="col-md-1 p-1">
+				<input type="color" class="form-control form-control-color" id="colorThldFW" value="#FF8C00" title="Choose your color">
+			</div>
+		  </div>
+		<!--Row-->
+		  <div class="row bg-light p-1 m-1">
+		  	<div class="col-md-1 p-1"></div>
+			<div class="col-md-2 p-1">SFW Trigger</div>
+			<div class="col-md-2 p-1">
+				<input class="form-control" id="thresholdSFW" type="text" placeholder="0" aria-label="default input example">
+			</div>
+			<div class="col-md-5 p-1">
+				<input class="form-control" id="txtThldNameSFW" type="text" placeholder="SFW Threshold Name" aria-label="default input example">
+			</div>
+			<div class="col-md-1 p-1">
+				<input type="color" class="form-control form-control-color" id="colorThldSFW" value="#FF0000" title="Choose your color">
+			</div>
+		  </div>
+		  <!--Row-->
+		  <div class="row bg-light p-1 m-1">
+		  	<div class="col-md-1 p-1"></div>
+			<div class="col-md-2 p-1">Additional Trigger 1</div>
+			<div class="col-md-2 p-1">
+				<input class="form-control" id="thresholdAddFirst" type="text" placeholder="0" aria-label="default input example">
+			</div>
+			<div class="col-md-5 p-1">
+				<input class="form-control" id="txtThldNameAddFirst" type="text" placeholder="Additional Threshold 1 Name" aria-label="default input example">
+			</div>
+			<div class="col-md-1 p-1">
+				<input type="color" class="form-control form-control-color" id="colorAddFirst" value="#808080" title="Choose your color">
+			</div>
+		  </div>
+		  <!--Row-->
+		  <div class="row bg-light p-1 m-1">
+		  	<div class="col-md-1 p-1"></div>
+			<div class="col-md-2 p-1">Additional Trigger 2</div>
+			<div class="col-md-2 p-1">
+				<input class="form-control" id="thresholdAddSecond" type="text" placeholder="0" aria-label="default input example">
+			</div>
+			<div class="col-md-5 p-1">
+				<input class="form-control" id="txtThldNameAddSecond" type="text" placeholder="FW Threshold 2 Name" aria-label="default input example">
+			</div>
+			<div class="col-md-1 p-1">
+				<input type="color" class="form-control form-control-color" id="colorAddSecond" value="#008B8B" title="Choose your color">
+			</div>
+		  </div>
+		  <!--Row-->
+		  <div class="row bg-light p-1 m-1">
+		  	<div class="col-md-1 p-1"></div>
+			<div class="col-md-2 p-1">Set Time Step</div>
+			<div class="col-md-8 p-1">
+				<input class="form-control" id="txtTimeStep" type="text" placeholder="3" aria-label="default input example">
+			</div>
+		  </div>
+		  <!--Row-->
+		  <div class="row bg-light p-1 m-1">
+		  	<div class="col-md-1 p-1"></div>
+			<div class="col-md-2 p-1">Set Primary Y Axis</div>
+			<div class="col-md-8 p-1">
+				<input class="form-control" id="txtMaxY1" type="text" placeholder="0" aria-label="default input example">
+			</div>
+		  </div>
+		  <!--Row-->
+			<div class="row bg-light p-1 m-1" id="importForecastData">
+		  	<div class="col-md-1 p-1"></div>
+			<div class="col-md-2 p-1">Reset Scenario</div>
+				<div class="col-md-2 p-1">
+					<button type="button" class="btn btn-outline-secondary" id="btnReset" style="width:100%"><i class="fas fa-sync"></i></button>
+				</div>
+			</div> 
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ISSUE FAL -->
+<div class="modal fade xl" id="myIssueFALModal">
+	<div class="modal-dialog modal-xl">
+		<div class="modal-content">
+			<!-- Modal Header -->
+			<div class="modal-header p-5">
+				<img src='images/Simulator.png' alt='WI Logo' class="img-fluid" style="max-width: 33%;">
+				</br>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+			</div>
+			<!-- Modal body -->
+			<div class="modal-body" id="finalText">
+				<!--Row-->
+				<div class="row bg-light p-4">
+					<div class="col-md-12">
+					  <div class="col-12 input-group">
+						<div class="form-floating">
+						  <textarea class="form-control" id="txtFAL" name="text" placeholder="" style="height: 300px;"></textarea>
+						  <label for="txtComments">FAL Message Text</label>
+						</div>
+						</div>
+					</div>
+				<!--Row-->
+					<div class="row bg-light p-4">
+						<div class="col-md-12">
+						  <button type="button" class="btn btn-warning" style="width:100%;" id="btnIssueFAL">Issue FAL</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+ </div>
+
+<!-- ISSUE FW --> 
+<div class="modal fade xl" id="myIssueFWModal">
+	<div class="modal-dialog modal-xl">
+		<div class="modal-content">
+			<!-- Modal Header -->
+			<div class="modal-header p-5">
+				<img src='images/Simulator.png' alt='WI Logo' class="img-fluid" style="max-width: 33%;">
+				</br>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+			</div>
+			<!-- Modal body -->
+			<div class="modal-body" id="finalText">
+				<!--Row-->
+				<div class="row bg-light p-4">
+					<div class="col-md-12">
+					  <div class="col-12 input-group">
+						<div class="form-floating">
+						  <textarea class="form-control" id="txtFW" name="text" placeholder="" style="height: 300px;"></textarea>
+						  <label for="txtComments">FW Message Text</label>
+						</div>
+						</div>
+					</div>
+				<!--Row-->
+					<div class="row bg-light p-4">
+						<div class="col-md-12">
+						  <button type="button" class="btn btn-warning bg-fworange" style="width:100%;" id="btnIssueFW">Issue FW</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+ </div>
+
+
+<!-- ISSUE SFW --> 
+<div class="modal fade xl" id="myIssueSFWModal">
+	<div class="modal-dialog modal-xl">
+		<div class="modal-content">
+			<!-- Modal Header -->
+			<div class="modal-header p-5">
+				<img src='images/Simulator.png' alt='WI Logo' class="img-fluid" style="max-width: 33%;">
+				</br>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+			</div>
+			<!-- Modal body -->
+			<div class="modal-body" id="finalText">
+				<!--Row-->
+				<div class="row bg-light p-4">
+					<div class="col-md-12">
+					  <div class="col-12 input-group">
+						<div class="form-floating">
+						  <textarea class="form-control" id="txtSFW" name="text" placeholder="" style="height: 300px;"></textarea>
+						  <label for="txtComments">SFW Message Text</label>
+						</div>
+						</div>
+					</div>
+				<!--Row-->
+					<div class="row bg-light p-4">
+						<div class="col-md-12">
+						  <button type="button" class="btn btn-danger" style="width:100%;" id="btnIssueSFW">Issue SFW</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+ </div>
+  
+  
+  
+
+
+<!--SCRIPTS-->
+<script src="Simulate_v6.0.js"></script>
+<noscript>Sorry, your browser does not support JavaScript</noscript>
+</body>
+</html>
